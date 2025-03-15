@@ -1,0 +1,39 @@
+# Fichiers binaires et objets
+bin/
+obj/
+*.o
+*.a
+*.so
+*.out
+*.exe
+nmap_clone
+test_server
+
+# Fichiers de dépendances
+*.d
+
+# Fichiers de sauvegarde d'éditeurs
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+*.sublime-*
+
+# Fichiers de système
+.DS_Store
+Thumbs.db
+
+# Fichiers de logs et données temporaires
+*.log
+*.tmp
+tmp/
+temp/
+
+# Fichiers de configuration spécifiques à l'utilisateur
+.env
+.env.local
+
+# Fichiers de build et de distribution
+build/
+dist/
