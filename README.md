@@ -113,6 +113,8 @@ Le serveur de test démarre un service TCP sur le port 8888 qui peut être utili
 
 ### Exemples
 
+![Exemple de sortie de cmap](image/scan1.png)
+
 Scan TCP basique sur localhost (nécessite -Pn car localhost ne répond pas toujours au ping interne) :
 ```bash
 ./cmap 127.0.0.1 -Pn
@@ -122,6 +124,7 @@ Scan TCP sur le port du serveur de test :
 ```bash
 ./cmap 127.0.0.1 8888 8888 -Pn
 ```
+*(Utilisez cette commande après avoir lancé `./bin/test_server` pour vérifier que le scan détecte bien le port 8888 comme ouvert).*
 
 Scan TCP des ports 1 à 1024 sur une IP du réseau local, avec mode verbeux et sans ping :
 ```bash
@@ -284,6 +287,8 @@ The test server starts a TCP service on port 8888 that can be used to verify tha
 
 ### Examples
 
+![cmap example output](image/scan1.png)
+
 Basic TCP scan on localhost (requires -Pn as localhost might not respond to internal ping):
 ```bash
 ./cmap 127.0.0.1 -Pn
@@ -293,38 +298,213 @@ TCP scan on the test server port:
 ```bash
 ./cmap 127.0.0.1 8888 8888 -Pn
 ```
+*(Use this command after starting `./bin/test_server` to verify that the scan correctly detects port 8888 as open).*
 
 Scan TCP ports 1 to 1024 on a local network IP, with verbose mode and no ping:
 ```bash
 ./cmap 192.168.1.1 1 1024 --verbose -Pn
 ```
 
-UDP scan of the first 100 ports:
+Scan UDP des 100 premiers ports :
 ```bash
 ./cmap 192.168.1.1 1 100 --udp -Pn
 ```
 
-SYN scan with 16 threads and short timeout:
+Scan SYN with 16 threads and short timeout :
 ```bash
-# Warning: requires sudo
+# Attention: requires sudo
 sudo ./cmap 192.168.1.1 1 1024 --syn --threads 16 --timeout 500 -Pn
 ```
 
-## Installation (Optional)
+## Installation (Optionnel)
 
-If you want to run the `cmap` command from any directory without typing `./cmap`, you can install it in a directory included in your `PATH`.
+If you want to be able to run the `cmap` command from anywhere without typing `./cmap`, you can install it in a directory included in your `PATH`.
 
-1.  Run the install command (copies `cmap` to `~/.local/bin`):
+1.  Run the installation command (copy `cmap` to `~/.local/bin`) :
     ```bash
     make install
     ```
-2.  Ensure `~/.local/bin` is in your `PATH`. If not, add the following line to your shell configuration file (e.g., `~/.zshrc`, `~/.bashrc`):
+2.  Ensure that `~/.local/bin` is in your `PATH`. If it's not, add the following line to your shell configuration file (ex: `~/.zshrc`, `~/.bashrc`) :
     ```bash
     export PATH="$HOME/.local/bin:$PATH"
     ```
 3.  Reload your shell configuration (`source ~/.zshrc` or `source ~/.bashrc`) or open a new terminal.
 
-After this, you should be able to type `cmap <arguments>` directly.
+After that, you should be able to type `cmap <arguments>` directly.
+
+## Dependencies
+
+- pthread library for multithreading
+- Standard Linux network libraries (socket, netinet)
+- **Important Note**: This program only works on Linux and is not compatible with Windows or macOS without significant modifications
+
+## License
+
+This project is distributed under a free license.
+
+---
+
+# English Documentation
+
+# Nmap Clone (CMAP)
+
+```
+ ██████╗ ███╗   ███╗ █████╗ ██████╗ 
+██╔════╝ ████╗ ████║██╔══██╗██╔══██╗
+██║      ██╔████╔██║███████║██████╔╝
+██║      ██║╚██╔╝██║██╔══██║██╔═══╝ 
+╚██████╗ ██║ ╚═╝ ██║██║  ██║██║     
+ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     
+```
+
+This project is a simplified implementation of the Nmap tool in C language, capable of scanning networks, detecting active hosts, scanning open ports, and identifying associated services. **This project is designed to work exclusively on Linux.**
+
+## Features
+
+- **Host Discovery**: ICMP ping to check if the host is active, with TCP fallback for environments where ICMP is blocked
+- **TCP Port Scanning**: TCP Connect scan, TCP SYN scan (requires root privileges)
+- **UDP Port Scanning**
+- **Service Detection**: Identification of common services associated with ports
+- **OS Detection (basic)**: Attempt to identify the operating system based on open ports
+- **Multithreading**: Simultaneous scanning of multiple ports for better performance
+- **Test Server**: Tool to test the scanner on localhost
+
+## Project Structure
+
+```
+CMAP-network-scanner/
+├── include/           # Header files (.h)
+│   ├── scanner.h
+│   ├── utils.h
+│   └── network.h
+├── src/               # Source code (.c)
+│   ├── main.c
+│   ├── scanner.c
+│   ├── utils.c
+│   ├── network.c
+│   └── test_server.c
+├── obj/               # Compiled object files (.o) (created by make)
+├── bin/               # Directory for the test server executable (created by make)
+├── Makefile           # Compilation configuration
+├── cmap               # Main executable (created by make)
+└── README.md          # Project documentation
+```
+
+## Prerequisites
+
+- Linux operating system
+- GCC compiler
+- Make
+- Standard Linux development libraries (libc, pthread)
+
+## Compilation
+
+To compile the project, run the following command in the project root:
+
+```bash
+# Compile the main scanner (cmap)
+make
+```
+
+This will create the `cmap` executable in the project root.
+
+To also compile the test server:
+
+```bash
+# Compile the test server (bin/test_server)
+make test_server
+```
+
+To clean compiled files and executables:
+
+```bash
+# Clean the project
+make clean
+```
+
+## Usage
+
+### Main Scanner
+
+Run the command from the project root:
+
+```bash
+./cmap <ip_address> [start_port] [end_port] [options]
+```
+
+**Arguments:**
+
+- `<ip_address>`: Target IP address to scan.
+- `[start_port]` (Optional): Starting port for the scan range (default: 1).
+- `[end_port]` (Optional): Ending port for the scan range (default: 1024).
+
+**Options:**
+
+- `-h`, `--help`: Display this help message.
+- `--os-detection`: Enable (basic) operating system detection.
+- `--udp`: Perform a UDP scan instead of the default TCP Connect scan.
+- `--syn`: Perform a TCP SYN scan (requires administrator/root privileges).
+- `--verbose`: Display detailed information, including all scanned ports (open, closed, filtered) and known services.
+- `-Pn`: Disable initial host discovery (ping). Useful if the host blocks pings.
+- `--threads <n>`: Number of threads to use for scanning (default: 4, max: 32).
+- `--timeout <ms>`: Timeout in milliseconds for connection attempts and responses (default: 2000).
+
+### Test Server
+
+If you compiled the test server:
+
+```bash
+./bin/test_server
+```
+
+The test server starts a TCP service on port 8888 that can be used to verify that the scanner is working correctly.
+
+### Examples
+
+![cmap example output](image/scan1.png)
+
+Basic TCP scan on localhost (requires -Pn as localhost might not respond to internal ping):
+```bash
+./cmap 127.0.0.1 -Pn
+```
+
+TCP scan on the test server port:
+```bash
+./cmap 127.0.0.1 8888 8888 -Pn
+```
+*(Use this command after starting `./bin/test_server` to verify that the scan correctly detects port 8888 as open).*
+
+Scan TCP ports 1 to 1024 on a local network IP, with verbose mode and no ping:
+```bash
+./cmap 192.168.1.1 1 1024 --verbose -Pn
+```
+
+Scan UDP des 100 premiers ports :
+```bash
+./cmap 192.168.1.1 1 100 --udp -Pn
+```
+
+Scan SYN with 16 threads and short timeout :
+```bash
+# Attention: requires sudo
+sudo ./cmap 192.168.1.1 1 1024 --syn --threads 16 --timeout 500 -Pn
+```
+
+## Installation (Optionnel)
+
+If you want to be able to run the `cmap` command from anywhere without typing `./cmap`, you can install it in a directory included in your `PATH`.
+
+1.  Run the installation command (copy `cmap` to `~/.local/bin`) :
+    ```bash
+    make install
+    ```
+2.  Ensure that `~/.local/bin` is in your `PATH`. If it's not, add the following line to your shell configuration file (ex: `~/.zshrc`, `~/.bashrc`) :
+    ```bash
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+3.  Reload your shell configuration (`source ~/.zshrc` or `source ~/.bashrc`) or open a new terminal.
+
+After that, you should be able to type `cmap <arguments>` directly.
 
 ## Dependencies
 

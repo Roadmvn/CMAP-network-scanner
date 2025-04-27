@@ -1,6 +1,6 @@
 # Variables
 CC = gcc
-CFLAGS = -Wall -Wextra -I./include
+CFLAGS = -Wall -Wextra -I./include -O2
 LDFLAGS = -lpthread
 SRC_DIR = src
 OBJ_DIR = obj
