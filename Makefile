@@ -5,7 +5,7 @@ LDFLAGS = -lpthread
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
-TARGET = $(BIN_DIR)/nmap_clone
+TARGET = cmap
 
 # Sources et objets
 SRCS = $(wildcard $(SRC_DIR)/*.c)
@@ -39,8 +39,17 @@ $(OBJ_DIR)/test_server.o: $(SRC_DIR)/test_server.c
 clean:
 	@rm -rf $(OBJ_DIR)
 	@rm -rf $(BIN_DIR)
+	@rm -f $(TARGET)
 
 # Règle pour éviter de supprimer les fichiers intermédiaires
 .PRECIOUS: $(OBJ_DIR)/%.o
 
-.PHONY: all clean directories test_server
+# Installation (copie l'exécutable dans ~/.local/bin)
+INSTALL_DIR = $(HOME)/.local/bin
+install:
+	@mkdir -p $(INSTALL_DIR)
+	@cp $(TARGET) $(INSTALL_DIR)/cmap
+	@chmod +x $(INSTALL_DIR)/cmap
+	@echo "cmap installé dans $(INSTALL_DIR)"
+
+.PHONY: all clean directories test_server install

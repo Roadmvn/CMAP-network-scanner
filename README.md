@@ -14,26 +14,31 @@ Ce projet est une implémentation simplifiée de l'outil Nmap en langage C, capa
 ## Fonctionnalités
 
 - **Découverte d'hôtes** : Ping ICMP pour vérifier si l'hôte est actif, avec fallback TCP pour les environnements où ICMP est bloqué
-- **Scan de ports TCP** : Scan TCP Connect pour détecter les ports ouverts
+- **Scan de ports TCP** : Scan TCP Connect, Scan TCP SYN (nécessite privilèges root)
+- **Scan de ports UDP**
 - **Détection de services** : Identification des services courants associés aux ports
+- **Détection d'OS (basique)** : Tentative d'identification du système d'exploitation basé sur les ports ouverts
 - **Multithreading** : Scan simultané de plusieurs ports pour de meilleures performances
 - **Serveur de test** : Outil pour tester le scanner sur localhost
 
 ## Structure du projet
 
 ```
-cmap/
-├── include/           # Fichiers d'en-tête
-│   ├── scanner.h      # Fonctions de scan réseau
-│   ├── utils.h        # Fonctions utilitaires
-│   └── network.h      # Fonctions réseau bas niveau
-├── src/               # Code source
-│   ├── main.c         # Point d'entrée du programme
-│   ├── scanner.c      # Implémentation du scanner
-│   ├── utils.c        # Implémentation des utilitaires
-│   ├── network.c      # Implémentation des fonctions réseau
-│   └── test_server.c  # Serveur de test pour valider le scanner
+CMAP-network-scanner/
+├── include/           # Fichiers d'en-tête (.h)
+│   ├── scanner.h
+│   ├── utils.h
+│   └── network.h
+├── src/               # Code source (.c)
+│   ├── main.c
+│   ├── scanner.c
+│   ├── utils.c
+│   ├── network.c
+│   └── test_server.c
+├── obj/               # Fichiers objets compilés (.o) (créé par make)
+├── bin/               # Répertoire pour l'exécutable du serveur de test (créé par make)
 ├── Makefile           # Configuration de compilation
+├── cmap               # Exécutable principal (créé par make)
 └── README.md          # Documentation du projet
 ```
 
@@ -46,78 +51,109 @@ cmap/
 
 ## Compilation
 
-Pour compiler le projet, exécutez les commandes suivantes :
+Pour compiler le projet, exécutez la commande suivante à la racine du projet :
 
 ```bash
-# Compiler le scanner principal
+# Compiler le scanner principal (cmap)
 make
-
-# Compiler le serveur de test
-make test_server
-
-# Nettoyer les fichiers compilés
-make clean
 ```
 
-Cela créera les exécutables `nmap_clone` et `test_server` dans le répertoire `bin/`.
+Cela créera l'exécutable `cmap` à la racine du projet.
+
+Pour compiler également le serveur de test :
+
+```bash
+# Compiler le serveur de test (bin/test_server)
+make test_server
+```
+
+Pour nettoyer les fichiers compilés et les exécutables :
+
+```bash
+# Nettoyer le projet
+make clean
+```
 
 ## Utilisation
 
 ### Scanner principal
 
+Exécutez la commande depuis la racine du projet :
+
 ```bash
-bin/nmap_clone <ip_address> [start_port] [end_port] [options]
+./cmap <ip_address> [start_port] [end_port] [options]
 ```
 
-### Options
+**Arguments :**
 
-- `--verbose` : Affiche des informations détaillées, y compris les ports fermés et filtrés
-- `-Pn` : Désactive la détection d'hôte (ping) - **Recommandé pour localhost**
-- `--threads <n>` : Nombre de threads à utiliser (défaut: 4, max: 32)
-- `--timeout <ms>` : Timeout en millisecondes (défaut: 2000)
+- `<ip_address>` : Adresse IP cible à scanner.
+- `[start_port]` (Optionnel) : Port de début de la plage de scan (défaut : 1).
+- `[end_port]` (Optionnel) : Port de fin de la plage de scan (défaut : 1024).
+
+**Options :**
+
+- `-h`, `--help` : Affiche ce message d'aide.
+- `--os-detection` : Active la détection (basique) du système d'exploitation.
+- `--udp` : Effectue un scan UDP au lieu du scan TCP Connect par défaut.
+- `--syn` : Effectue un scan TCP SYN (nécessite des privilèges administrateur/root).
+- `--verbose` : Affiche des informations détaillées, y compris tous les ports scannés (ouverts, fermés, filtrés) et les services connus.
+- `-Pn` : Désactive la détection d'hôte initiale (ping). Utile si l'hôte bloque les pings.
+- `--threads <n>` : Nombre de threads à utiliser pour le scan (défaut: 4, max: 32).
+- `--timeout <ms>` : Timeout en millisecondes pour les tentatives de connexion et réponses (défaut: 2000).
 
 ### Serveur de test
 
+Si vous avez compilé le serveur de test :
+
 ```bash
-bin/test_server
+./bin/test_server
 ```
 
 Le serveur de test démarre un service TCP sur le port 8888 qui peut être utilisé pour vérifier que le scanner fonctionne correctement.
 
 ### Exemples
 
-Scan TCP basique sur localhost avec l'option -Pn (recommandé) :
+Scan TCP basique sur localhost (nécessite -Pn car localhost ne répond pas toujours au ping interne) :
 ```bash
-bin/nmap_clone 127.0.0.1 -Pn
+./cmap 127.0.0.1 -Pn
 ```
 
-Scan TCP sur un port spécifique (utile pour tester avec le serveur de test) :
+Scan TCP sur le port du serveur de test :
 ```bash
-bin/nmap_clone 127.0.0.1 8888 8888 -Pn
+./cmap 127.0.0.1 8888 8888 -Pn
 ```
 
-Scan TCP sur une plage de ports spécifique avec mode verbeux :
+Scan TCP des ports 1 à 1024 sur une IP du réseau local, avec mode verbeux et sans ping :
 ```bash
-bin/nmap_clone 192.168.1.1 1 1024 -Pn --verbose
+./cmap 192.168.1.1 1 1024 --verbose -Pn
 ```
 
-Scan avec un timeout plus court pour les réseaux rapides :
+Scan UDP des 100 premiers ports :
 ```bash
-bin/nmap_clone 192.168.1.1 -Pn --timeout 500
+./cmap 192.168.1.1 1 100 --udp -Pn
 ```
 
-## Fonctionnalités spéciales
+Scan SYN avec 16 threads et timeout court :
+```bash
+# Attention: nécessite sudo
+sudo ./cmap 192.168.1.1 1 1024 --syn --threads 16 --timeout 500 -Pn
+```
 
-### Détection de localhost
+## Installation (Optionnel)
 
-Le scanner inclut une logique spéciale pour détecter les ports ouverts sur localhost (127.0.0.1), ce qui améliore la précision des résultats lors des tests locaux.
+Si vous souhaitez pouvoir exécuter la commande `cmap` depuis n'importe quel répertoire sans taper `./cmap`, vous pouvez l'installer dans un répertoire inclus dans votre `PATH`.
 
-### Affichage des résultats
+1.  Exécutez la commande d'installation (copie `cmap` vers `~/.local/bin`) :
+    ```bash
+    make install
+    ```
+2.  Assurez-vous que `~/.local/bin` est dans votre `PATH`. Si ce n'est pas le cas, ajoutez la ligne suivante à votre fichier de configuration shell (ex: `~/.zshrc`, `~/.bashrc`) :
+    ```bash
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+3.  Rechargez votre configuration shell (`source ~/.zshrc` ou `source ~/.bashrc`) ou ouvrez un nouveau terminal.
 
-Les résultats du scan sont présentés de manière claire avec :
-- Liste des ports ouverts (ou tous les ports en mode verbeux)
-- Statistiques sur le nombre de ports scannés, ouverts, fermés et filtrés
-- Temps d'exécution du scan
+Après cela, vous devriez pouvoir taper `cmap <arguments>` directement.
 
 ## Dépendances
 
@@ -135,15 +171,47 @@ Ce projet est distribué sous licence libre.
 
 # Nmap Clone (CMAP)
 
+```
+ ██████╗ ███╗   ███╗ █████╗ ██████╗ 
+██╔════╝ ████╗ ████║██╔══██╗██╔══██╗
+██║      ██╔████╔██║███████║██████╔╝
+██║      ██║╚██╔╝██║██╔══██║██╔═══╝ 
+╚██████╗ ██║ ╚═╝ ██║██║  ██║██║     
+ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     
+```
+
 This project is a simplified implementation of the Nmap tool in C language, capable of scanning networks, detecting active hosts, scanning open ports, and identifying associated services. **This project is designed to work exclusively on Linux.**
 
 ## Features
 
 - **Host Discovery**: ICMP ping to check if the host is active, with TCP fallback for environments where ICMP is blocked
-- **TCP Port Scanning**: TCP Connect scan to detect open ports
+- **TCP Port Scanning**: TCP Connect scan, TCP SYN scan (requires root privileges)
+- **UDP Port Scanning**
 - **Service Detection**: Identification of common services associated with ports
+- **OS Detection (basic)**: Attempt to identify the operating system based on open ports
 - **Multithreading**: Simultaneous scanning of multiple ports for better performance
 - **Test Server**: Tool to test the scanner on localhost
+
+## Project Structure
+
+```
+CMAP-network-scanner/
+├── include/           # Header files (.h)
+│   ├── scanner.h
+│   ├── utils.h
+│   └── network.h
+├── src/               # Source code (.c)
+│   ├── main.c
+│   ├── scanner.c
+│   ├── utils.c
+│   ├── network.c
+│   └── test_server.c
+├── obj/               # Compiled object files (.o) (created by make)
+├── bin/               # Directory for the test server executable (created by make)
+├── Makefile           # Compilation configuration
+├── cmap               # Main executable (created by make)
+└── README.md          # Project documentation
+```
 
 ## Prerequisites
 
@@ -152,105 +220,118 @@ This project is a simplified implementation of the Nmap tool in C language, capa
 - Make
 - Standard Linux development libraries (libc, pthread)
 
-## Project Structure
-
-```
-cmap/
-├── include/           # Header files
-│   ├── scanner.h      # Network scanning functions
-│   ├── utils.h        # Utility functions
-│   └── network.h      # Low-level network functions
-├── src/               # Source code
-│   ├── main.c         # Program entry point
-│   ├── scanner.c      # Scanner implementation
-│   ├── utils.c        # Utilities implementation
-│   ├── network.c      # Network functions implementation
-│   └── test_server.c  # Test server to validate the scanner
-├── Makefile           # Compilation configuration
-└── README.md          # Project documentation
-```
-
 ## Compilation
 
-To compile the project, run the following commands:
+To compile the project, run the following command in the project root:
 
 ```bash
-# Compile the main scanner
+# Compile the main scanner (cmap)
 make
-
-# Compile the test server
-make test_server
-
-# Clean compiled files
-make clean
 ```
 
-This will create the `nmap_clone` and `test_server` executables in the `bin/` directory.
+This will create the `cmap` executable in the project root.
+
+To also compile the test server:
+
+```bash
+# Compile the test server (bin/test_server)
+make test_server
+```
+
+To clean compiled files and executables:
+
+```bash
+# Clean the project
+make clean
+```
 
 ## Usage
 
 ### Main Scanner
 
+Run the command from the project root:
+
 ```bash
-bin/nmap_clone <ip_address> [start_port] [end_port] [options]
+./cmap <ip_address> [start_port] [end_port] [options]
 ```
 
-### Options
+**Arguments:**
 
-- `--verbose`: Displays detailed information, including closed and filtered ports
-- `-Pn`: Disables host detection (ping) - **Recommended for localhost**
-- `--threads <n>`: Number of threads to use (default: 4, max: 32)
-- `--timeout <ms>`: Timeout in milliseconds (default: 2000)
+- `<ip_address>`: Target IP address to scan.
+- `[start_port]` (Optional): Starting port for the scan range (default: 1).
+- `[end_port]` (Optional): Ending port for the scan range (default: 1024).
+
+**Options:**
+
+- `-h`, `--help`: Display this help message.
+- `--os-detection`: Enable (basic) operating system detection.
+- `--udp`: Perform a UDP scan instead of the default TCP Connect scan.
+- `--syn`: Perform a TCP SYN scan (requires administrator/root privileges).
+- `--verbose`: Display detailed information, including all scanned ports (open, closed, filtered) and known services.
+- `-Pn`: Disable initial host discovery (ping). Useful if the host blocks pings.
+- `--threads <n>`: Number of threads to use for scanning (default: 4, max: 32).
+- `--timeout <ms>`: Timeout in milliseconds for connection attempts and responses (default: 2000).
 
 ### Test Server
 
+If you compiled the test server:
+
 ```bash
-bin/test_server
+./bin/test_server
 ```
 
 The test server starts a TCP service on port 8888 that can be used to verify that the scanner is working correctly.
 
 ### Examples
 
-Basic TCP scan on localhost with the -Pn option (recommended):
+Basic TCP scan on localhost (requires -Pn as localhost might not respond to internal ping):
 ```bash
-bin/nmap_clone 127.0.0.1 -Pn
+./cmap 127.0.0.1 -Pn
 ```
 
-TCP scan on a specific port (useful for testing with the test server):
+TCP scan on the test server port:
 ```bash
-bin/nmap_clone 127.0.0.1 8888 8888 -Pn
+./cmap 127.0.0.1 8888 8888 -Pn
 ```
 
-TCP scan on a specific port range with verbose mode:
+Scan TCP ports 1 to 1024 on a local network IP, with verbose mode and no ping:
 ```bash
-bin/nmap_clone 192.168.1.1 1 1024 -Pn --verbose
+./cmap 192.168.1.1 1 1024 --verbose -Pn
 ```
 
-Scan with a shorter timeout for fast networks:
+UDP scan of the first 100 ports:
 ```bash
-bin/nmap_clone 192.168.1.1 -Pn --timeout 500
+./cmap 192.168.1.1 1 100 --udp -Pn
 ```
 
-## Special Features
+SYN scan with 16 threads and short timeout:
+```bash
+# Warning: requires sudo
+sudo ./cmap 192.168.1.1 1 1024 --syn --threads 16 --timeout 500 -Pn
+```
 
-### Localhost Detection
+## Installation (Optional)
 
-The scanner includes special logic to detect open ports on localhost (127.0.0.1), which improves the accuracy of results during local testing.
+If you want to run the `cmap` command from any directory without typing `./cmap`, you can install it in a directory included in your `PATH`.
 
-### Results Display
+1.  Run the install command (copies `cmap` to `~/.local/bin`):
+    ```bash
+    make install
+    ```
+2.  Ensure `~/.local/bin` is in your `PATH`. If not, add the following line to your shell configuration file (e.g., `~/.zshrc`, `~/.bashrc`):
+    ```bash
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+3.  Reload your shell configuration (`source ~/.zshrc` or `source ~/.bashrc`) or open a new terminal.
 
-The scan results are presented clearly with:
-- List of open ports (or all ports in verbose mode)
-- Statistics on the number of ports scanned, open, closed, and filtered
-- Scan execution time
+After this, you should be able to type `cmap <arguments>` directly.
 
 ## Dependencies
 
-- Pthread library for multithreading
+- pthread library for multithreading
 - Standard Linux network libraries (socket, netinet)
-- **Important note**: This program only works on Linux and is not compatible with Windows or macOS without significant modifications
+- **Important Note**: This program only works on Linux and is not compatible with Windows or macOS without significant modifications
 
 ## License
 
-This project is distributed under an open license.
+This project is distributed under a free license.

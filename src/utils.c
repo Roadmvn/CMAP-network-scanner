@@ -161,10 +161,12 @@ void print_scan_results(const host_result_t *result, int verbose) {
             const port_result_t *port = &result->port_results[i];
             
             if (verbose || port->state == PORT_OPEN) {
-                printf("%d\t\t%s\t\t%s\n", 
-                       port->port, 
-                       port_state_to_string(port->state),
-                       port->service);
+                if (strcmp(port->service, "inconnu") != 0) {
+                    printf("%d\t\t%s\t\t%s\n", 
+                           port->port, 
+                           port_state_to_string(port->state),
+                           port->service);
+                }
             }
         }
     } else {
